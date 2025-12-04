@@ -63,21 +63,6 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-//	thumbnailImage := *new(thumbnail)
-//	thumbnailImage.data = dataBytes
-//	thumbnailImage.mediaType = mediaType
-//
-//	videoThumbnails[videoID] = thumbnailImage
-//
-//	port := os.Getenv("PORT")
-//	url := fmt.Sprintf("http://localhost:%s/api/thumbnails/%s", port, fmt.Sprintln(videoID))
-//	metadata.ThumbnailURL = &url
-//	err = cfg.db.UpdateVideo(metadata)
-//	if err != nil {
-//		respondWithError(w, http.StatusInternalServerError, "Couldn't read data", err)
-//		return
-//	}
-
 	// Encoding
 
 	dataString := base64.StdEncoding.EncodeToString(dataBytes)
@@ -85,6 +70,10 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 
 	metadata.ThumbnailURL = &dataURL
 	err = cfg.db.UpdateVideo(metadata)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't update video with new thumbnail video", err)
+		return
+	}
 
 	respondWithJSON(w, http.StatusOK, metadata)
 }
