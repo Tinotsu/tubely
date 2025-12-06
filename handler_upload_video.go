@@ -3,7 +3,6 @@ package main
 import (
 	"net/http"
 	"path"
-	"fmt"
 	"os"
 	"mime"
 	"io"
@@ -107,9 +106,26 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 	putObject.Body = processedFile
 	putObject.ContentType = &mediaType
 
-	cfg.s3Client.PutObject(r.Context(), putObject)
+	_, err = cfg.s3Client.PutObject(r.Context(), putObject)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't upload to S3", err)
+		return
+	}
 
-	videoURL := fmt.Sprintf("http://%s.s3.%s.amazonaws.com/%s", cfg.s3Bucket, cfg.s3Region, key)
+	videoURL := "https://" + cfg.s3CfDistribution + key
 	video.VideoURL = &videoURL
-	cfg.db.UpdateVideo(video)
+
+	err = cfg.db.UpdateVideo(video)  
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't update video", err)
+		return
+	}
+
+//	presignedVideo, err := cfg.dbVideoToSignedVideo(video)
+//	if err != nil {
+//		respondWithError(w, http.StatusInternalServerError, "Couldn't get presigned video in handlerUploadVideo", err)
+//		return
+//	}
+//
+//	respondWithJSON(w, http.StatusCreated, presignedVideo)
 }
